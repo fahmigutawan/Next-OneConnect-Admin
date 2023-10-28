@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase/app";
-import { DocumentData, QuerySnapshot, collection, getDocs, getFirestore, query } from "firebase/firestore"
+import { DocumentData, QuerySnapshot, collection, doc, getDoc, getDocs, getFirestore, query } from "firebase/firestore"
 import { DataSnapshot, getDatabase, onValue, ref, query as realtimeQuery, orderByChild, equalTo } from 'firebase/database'
+import { EmProviderStruct, EmTypeStruct } from "@/app/dashboard/[id]/page";
 
 export class Repository {
   firebaseConfig = {
@@ -16,11 +17,11 @@ export class Repository {
   firestore = getFirestore(this.fbApp)
   realtimeDb = getDatabase(this.fbApp)
 
-  getAllEmProvider(
+  async getAllEmProvider(
     onSuccess: (data: QuerySnapshot<DocumentData, DocumentData>) => void,
     onError: (e: Error) => void
   ) {
-    getDocs(
+    await getDocs(
       query(
         collection(
           this.firestore,
@@ -53,5 +54,50 @@ export class Repository {
         onListened(snapshot)
       }
     )
+  }
+
+  async getEmProviderById(
+    id: string,
+    onSuccess: (data: EmProviderStruct) => void
+  ) {
+    await getDoc(
+      doc(
+        this.firestore,
+        "em_srv_provider",
+        id
+      )
+    ).then(s => {
+      onSuccess(
+        {
+          em_pvd_id: s.get("em_pvd_id"),
+          name: s.get("name"),
+          em_type: s.get("em_type")
+        }
+      )
+    }).catch(e => {
+      console.log(e)
+    })
+  }
+
+  async getEmType(
+    emType: string,
+    onSuccess: (data: EmTypeStruct) => void
+  ) {
+    await getDoc(
+      doc(
+        this.firestore,
+        "em_type",
+        emType
+      )
+    ).then(s => {
+      onSuccess(
+        {
+          em_type_id: s.get("em_type_id"),
+          word: s.get("word")
+        }
+      )
+    }).catch(e => {
+      console.log(e)
+    })
   }
 }
