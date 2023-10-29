@@ -1,7 +1,36 @@
 import { initializeApp } from "firebase/app";
-import { DocumentData, QuerySnapshot, collection, doc, getDoc, getDocs, getFirestore, query } from "firebase/firestore"
-import { DataSnapshot, getDatabase, onValue, ref, query as realtimeQuery, orderByChild, equalTo } from 'firebase/database'
-import { EmProviderStruct, EmTypeStruct } from "@/app/dashboard/[id]/page";
+import { DocumentData, QuerySnapshot, collection, doc, getDoc, getDocs, getFirestore, query, updateDoc, where } from "firebase/firestore"
+import { DataSnapshot, getDatabase, onValue, ref, query as realtimeQuery, orderByChild, equalTo, update } from 'firebase/database'
+
+export interface EmCallStruct {
+  em_call_id: string,
+  em_call_status_id: string,
+  em_pvd_id: string,
+  created_at: number
+}
+
+export interface EmProviderStruct {
+  em_pvd_id: string,
+  name: string,
+  em_type: string
+}
+
+export interface EmTypeStruct {
+  em_type_id: string,
+  word: string
+}
+
+export interface EmCallStatus {
+  em_call_status_id: string,
+  word: string
+}
+
+export interface EmTransportStruct {
+  em_transport_id: string,
+  em_pvd_id: string,
+  is_available: boolean,
+  regist_number: string
+}
 
 export class Repository {
   firebaseConfig = {
@@ -90,6 +119,7 @@ export class Repository {
         emType
       )
     ).then(s => {
+      console.log(s.get("em_type_id"))
       onSuccess(
         {
           em_type_id: s.get("em_type_id"),
@@ -99,5 +129,77 @@ export class Repository {
     }).catch(e => {
       console.log(e)
     })
+  }
+
+  async getAllCallStatus(
+    onSuccess: (datas: EmCallStatus[]) => void
+  ) {
+    getDocs(
+      collection(
+        this.firestore,
+        "em_call_status"
+      )
+    ).then(s => {
+      onSuccess(
+        s.docs.map((item) => {
+          return {
+            em_call_status_id: item.get("em_call_status_id"),
+            word: item.get("word")
+          }
+        })
+      )
+    }).catch(e => {
+      console.log(e)
+    })
+  }
+
+  changeCallStatus(
+    emCallId: string,
+    newStatus: string,
+    onSuccess: () => void
+  ) {
+    update(
+      ref(this.realtimeDb, `/em_call/${emCallId}`),
+      {
+        "em_call_status_id": newStatus
+      }
+    ).then(() => {
+      onSuccess()
+    }).catch(e => {
+      console.log(e)
+    })
+  }
+
+  getEmTrasportById(
+    emPvdId: string,
+    onSuccess: (data: EmTransportStruct[]) => void
+  ) {
+    getDocs(
+      query(
+        collection(this.firestore, "em_transport"),
+        where("em_pvd_id", "==", emPvdId),
+      )
+    ).then(s => {
+      onSuccess(
+        s.docs.map(item => {
+          return {
+            em_pvd_id: item.get("em_pvd_id"),
+            em_transport_id: item.get("em_transport_id"),
+            is_available: item.get("is_available"),
+            regist_number: item.get("regist_number")
+          }
+        })
+      )
+    }).catch(e => {
+      console.log(e)
+    })
+  }
+
+  sendNotificationToDriver() {
+    //TODO
+  }
+
+  sendNotificationToUser() {
+    //TODO
   }
 }
