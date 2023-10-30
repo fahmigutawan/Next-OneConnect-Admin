@@ -216,7 +216,7 @@ export class Repository {
       fetch("https://fcm.googleapis.com/fcm/send", {
         headers: {
           "Content-Type": "application/json",
-          "Authorization": "key=AAAAST8F06A:APA91bEAKwQ-zPwqGGMQiK82tCwUmmTl2b0ITfdslL_D91By1qVNsu6_uB7qvQ6XPeuZvYtCW545juzB06tF7NFOE-M-MfiDcpUQTpeoFNlkG8BbqAnlnjB9H-Uo14FysEXp5_dacmIN"
+          "Authorization": "key="+process.env.FB_FCM_SERVERKEY
         },
         body: JSON.stringify(
           {

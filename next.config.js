@@ -7,7 +7,8 @@ const nextConfig = {
         FB_PROJECTID: process.env.FB_PROJECTID,
         FB_STORAGEBUCKET: process.env.FB_STORAGEBUCKET,
         FB_MESSAGINGSENDERID: process.env.FB_MESSAGINGSENDERID,
-        FB_APPID: process.env.FB_APPID
+        FB_APPID: process.env.FB_APPID,
+        FB_FCM_SERVERKEY: process.env.FB_FCM_SERVERKEY
     }
 }
 
