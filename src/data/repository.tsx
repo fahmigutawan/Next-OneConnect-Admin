@@ -6,7 +6,8 @@ export interface EmCallStruct {
   em_call_id: string,
   em_call_status_id: string,
   em_pvd_id: string,
-  created_at: number
+  created_at: number,
+  uid: string
 }
 
 export interface EmProviderStruct {
@@ -199,7 +200,49 @@ export class Repository {
     //TODO
   }
 
-  sendNotificationToUser() {
-    //TODO
+  sendNotificationToUser(
+    uid: string,
+    title: string,
+    body: string,
+    onSuccess: () => void
+  ) {
+    getDoc(
+      doc(
+        this.firestore,
+        "fcm_token",
+        uid
+      )
+    ).then(fcm => {
+      fetch("https://fcm.googleapis.com/fcm/send", {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "key=AAAAST8F06A:APA91bEAKwQ-zPwqGGMQiK82tCwUmmTl2b0ITfdslL_D91By1qVNsu6_uB7qvQ6XPeuZvYtCW545juzB06tF7NFOE-M-MfiDcpUQTpeoFNlkG8BbqAnlnjB9H-Uo14FysEXp5_dacmIN"
+        },
+        body: JSON.stringify(
+          {
+            "to": fcm.get("token"),
+            "notification": {
+              "title": title,
+              "body": body,
+              "mutable_content": true,
+              "sound": "Tri-tone"
+            },
+
+            "data": {
+
+            }
+          }
+        ),
+        method: "POST"
+      }).then(s => {
+        if (s.status == 200) {
+          onSuccess()
+        }
+      }).catch(e => {
+        console.log(e)
+      })
+    }).catch(e => {
+      console.log(e)
+    })
   }
 }

@@ -23,6 +23,7 @@ export default function DashboardScreen() {
         word: ""
     })
     const [emCallStatus, _] = useState(new Map<string, string>())
+    const [pickedEmCall, setPickedEmCall] = useState<EmCallStruct | null>(null)
     const [showKirimPetugasModal, setShowKirimPetugasModal] = useState(false)
     const [emTransport, setEmTransport] = useState<EmTransportStruct[]>([])
 
@@ -105,7 +106,7 @@ export default function DashboardScreen() {
                         <tbody>
                             {datas.map((item, index) => {
                                 return (
-                                    <tr>
+                                    <tr key={item.em_call_id}>
                                         <td className="text-center border border-slate-700 p-[16px]">{index + 1}</td>
                                         <td className="border border-slate-700 p-[16px]">{item.em_call_id}</td>
                                         <td className="border border-slate-700 p-[16px]">{new Date(item.created_at).toString()}</td>
@@ -121,18 +122,28 @@ export default function DashboardScreen() {
                                                             CallStatus.DIPROSES,
                                                             () => {
                                                                 Loading.remove()
+                                                                repository.sendNotificationToUser(
+                                                                    item.uid,
+                                                                    "Panggilan Ditindak lanjuti",
+                                                                    "Panggilan sedang diproses, tunggu tindakan selanjutnya!",
+                                                                    () => {
+                                                                        //TODO
+                                                                    }
+                                                                )
                                                                 Notify.success(`Status Panggilan ${item.em_call_id} Berhasil Dirubah`)
                                                                 datas[index] = {
                                                                     em_call_id: item.em_call_id,
                                                                     em_pvd_id: item.em_pvd_id,
                                                                     em_call_status_id: CallStatus.DIPROSES,
-                                                                    created_at: item.created_at
+                                                                    created_at: item.created_at,
+                                                                    uid: item.uid
                                                                 }
                                                             }
                                                         )
                                                     }}
                                                     onKirimPetugasClick={() => {
                                                         setShowKirimPetugasModal(true)
+                                                        setPickedEmCall(item)
                                                     }}
                                                 />
                                             </div>
@@ -148,6 +159,7 @@ export default function DashboardScreen() {
                 open={showKirimPetugasModal}
                 onClose={() => {
                     setShowKirimPetugasModal(false)
+                    setPickedEmCall(null)
                 }}
                 className="flex justify-center items-center"
             >
@@ -155,17 +167,19 @@ export default function DashboardScreen() {
                     <div className="m-[128px] p-[32px] overflow-auto flex flex-col items-center justify-center bg-white rounded-sm">
                         <table>
                             <thead>
-                                <th className="px-[16px] py-[8px] border border-black">No</th>
-                                <th className="px-[16px] py-[8px] border border-black">Id Kendaraan</th>
-                                <th className="px-[16px] py-[8px] border border-black">Plat Kendaraan</th>
-                                <th className="px-[16px] py-[8px] border border-black">Status</th>
-                                <th className="px-[16px] py-[8px] border border-black">Aksi</th>
+                                <tr>
+                                    <th className="px-[16px] py-[8px] border border-black">No</th>
+                                    <th className="px-[16px] py-[8px] border border-black">Id Kendaraan</th>
+                                    <th className="px-[16px] py-[8px] border border-black">Plat Kendaraan</th>
+                                    <th className="px-[16px] py-[8px] border border-black">Status</th>
+                                    <th className="px-[16px] py-[8px] border border-black">Aksi</th>
+                                </tr>
                             </thead>
                             <tbody>
                                 {
                                     emTransport.map((s, index) => {
                                         return (
-                                            <tr>
+                                            <tr key={s.em_transport_id}>
                                                 <td className="px-[16px] py-[8px] border border-black text-center">{index + 1}</td>
                                                 <td className="px-[16px] py-[8px] border border-black">{s.em_transport_id}</td>
                                                 <td className="px-[16px] py-[8px] border border-black text-center">{s.regist_number}</td>
@@ -173,7 +187,20 @@ export default function DashboardScreen() {
                                                 <td className="px-[16px] py-[8px] border border-black text-center">
                                                     {
                                                         (s.is_available) ?
-                                                            <Button variant="contained">
+                                                            <Button
+                                                                variant="contained"
+                                                                className="bg-blue-500"
+                                                                onClick={() => {
+                                                                    repository.sendNotificationToUser(
+                                                                        pickedEmCall?.uid ?? "",
+                                                                        "Petugas Berjalan ke Lokasi Anda",
+                                                                        "Petugas sedang dalam perjalana, pastikan anda ada di lokasi kejadian!",
+                                                                        () => {
+                                                                            //TODO
+                                                                        }
+                                                                    )
+                                                                }}
+                                                            >
                                                                 Tugaskan
                                                             </Button>
                                                             : "-"
