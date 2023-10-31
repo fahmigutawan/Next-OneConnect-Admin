@@ -26,6 +26,7 @@ export default function DashboardScreen() {
     const [pickedEmCall, setPickedEmCall] = useState<EmCallStruct | null>(null)
     const [showKirimPetugasModal, setShowKirimPetugasModal] = useState(false)
     const [emTransport, setEmTransport] = useState<EmTransportStruct[]>([])
+    const [newCall, setNewCall] = useState<EmCallStruct | null>(null)
 
     useEffect(() => {
         repository.listenEmergencyCall(
@@ -41,6 +42,19 @@ export default function DashboardScreen() {
                             return b.created_at - a.created_at
                         })
                 )
+            },
+            (newChild) => {
+                if (newChild.size > 0) {
+                    // setNewCall(
+                    //     Object.values<EmCallStruct>(newChild.exportVal()).sort((a, b) => {
+                    //         return b.created_at - a.created_at
+                    //     })[0]
+                    // )
+                    
+                    // Object.values<EmCallStruct>(newChild.exportVal()).forEach(s => {
+                    //     console.log(s.uid)
+                    // })
+                }
             }
         )
 
@@ -92,9 +106,11 @@ export default function DashboardScreen() {
                         <p>Kategori : {emType.word}</p>
                     </div>
                 </div>
-                <div className="flex px-[32px] py-[64px]">
-
-                    <table className="w-screen border border-slate-700">
+                <div className="mx-[32px] my-[32px]">
+                    {/* <div className="h-[256px] rounded-xl border-[2px] border-gray-300 p-[32px]">
+                        {<Notification call={newCall} />}
+                    </div> */}
+                    <table className="w-full border border-slate-700 mt-[32px]">
                         <thead>
                             <tr>
                                 <th className="border border-slate-700">No</th>
@@ -115,6 +131,7 @@ export default function DashboardScreen() {
                                                 <p>{emCallStatus.get(item.em_call_status_id) ?? "..."}</p>
                                                 <CallStatusAction
                                                     call_status_id={item.em_call_status_id}
+                                                    em_transport_id={item.em_transport_id}
                                                     onProsesPanggilanClick={() => {
                                                         Loading.circle()
                                                         repository.changeCallStatus(
@@ -136,7 +153,9 @@ export default function DashboardScreen() {
                                                                     em_pvd_id: item.em_pvd_id,
                                                                     em_call_status_id: CallStatus.DIPROSES,
                                                                     created_at: item.created_at,
-                                                                    uid: item.uid
+                                                                    em_transport_id: item.em_transport_id,
+                                                                    uid: item.uid,
+                                                                    user_phone_number: item.user_phone_number
                                                                 }
                                                             }
                                                         )
@@ -164,7 +183,7 @@ export default function DashboardScreen() {
                 className="flex justify-center items-center"
             >
                 <Box>
-                    <div className="m-[128px] p-[32px] overflow-auto flex flex-col items-center justify-center bg-white rounded-sm">
+                    <div className="p-[32px] overflow-auto flex flex-col items-center justify-center bg-white rounded-sm">
                         <table>
                             <thead>
                                 <tr>
@@ -191,12 +210,24 @@ export default function DashboardScreen() {
                                                                 variant="contained"
                                                                 className="bg-blue-500"
                                                                 onClick={() => {
-                                                                    repository.sendNotificationToUser(
-                                                                        pickedEmCall?.uid ?? "",
-                                                                        "Petugas Berjalan ke Lokasi Anda",
-                                                                        "Petugas sedang dalam perjalana, pastikan anda ada di lokasi kejadian!",
+                                                                    repository.changeCallEmTransportId(
+                                                                        pickedEmCall?.em_call_id ?? "",
+                                                                        s.em_transport_id,
                                                                         () => {
-                                                                            //TODO
+                                                                            repository.changeEmTransportAvailability(
+                                                                                s.em_transport_id,
+                                                                                false,
+                                                                                () => {
+                                                                                    emTransport[index] = {
+                                                                                        em_pvd_id: s.em_pvd_id,
+                                                                                        em_transport_id: s.em_transport_id,
+                                                                                        is_available: false,
+                                                                                        regist_number: s.regist_number
+                                                                                    }
+
+                                                                                    Notify.success("Sudah ditugaskan kepada kendaraan " + s.regist_number)
+                                                                                }
+                                                                            )
                                                                         }
                                                                     )
                                                                 }}
@@ -221,6 +252,7 @@ export default function DashboardScreen() {
 
 export class CallStatusAction extends React.Component<{
     call_status_id: string,
+    em_transport_id: string,
     onProsesPanggilanClick: () => void,
     onKirimPetugasClick: () => void
 }>
@@ -231,7 +263,7 @@ export class CallStatusAction extends React.Component<{
             case CallStatus.MENUNGGU_KONFIRMASI:
                 return <Button variant="contained" className="w-full bg-blue-500" onClick={this.props.onProsesPanggilanClick}>Proses Panggilan</Button>
             case CallStatus.DIPROSES:
-                return <Button variant="contained" className="w-full bg-yellow-600" onClick={this.props.onKirimPetugasClick}>Kirim Petugas</Button>
+                return <Button disabled={this.props.em_transport_id != "."} variant="contained" className="w-full bg-yellow-600" onClick={this.props.onKirimPetugasClick}>Kirim Petugas</Button>
             case CallStatus.SEDANG_PERJALANAN:
                 return <></>
             case CallStatus.SELESAI:
@@ -243,4 +275,28 @@ export class CallStatusAction extends React.Component<{
         return <></>
     }
 
+}
+
+export class Notification extends React.Component<{
+    call: EmCallStruct | null
+}>{
+    render(): React.ReactNode {
+        if (this.props.call == null) {
+            return (
+                <div>
+                    Belum Ada Notifikasi Baru
+                </div>
+            )
+        } else {
+            return (
+                <div className="flex flex-col space-y-[8px]">
+                    <p className="text-[24px]">NOTIFIKASI BARU</p>
+                    <div>
+                        <p>Id Panggilan : {this.props.call.em_call_id}</p>
+                        <p>Nomor HP : {this.props.call.user_phone_number}</p>
+                    </div>
+                </div>
+            )
+        }
+    }
 }

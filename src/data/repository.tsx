@@ -1,12 +1,14 @@
 import { initializeApp } from "firebase/app";
 import { DocumentData, QuerySnapshot, collection, doc, getDoc, getDocs, getFirestore, query, updateDoc, where } from "firebase/firestore"
-import { DataSnapshot, getDatabase, onValue, ref, query as realtimeQuery, orderByChild, equalTo, update } from 'firebase/database'
+import { DataSnapshot, getDatabase, onValue, ref, query as realtimeQuery, orderByChild, equalTo, update, onChildAdded } from 'firebase/database'
 
 export interface EmCallStruct {
   em_call_id: string,
   em_call_status_id: string,
+  em_transport_id:string,
   em_pvd_id: string,
   created_at: number,
+  user_phone_number:string,
   uid: string
 }
 
@@ -67,7 +69,8 @@ export class Repository {
 
   listenEmergencyCall(
     emPvdId: string,
-    onListened: (data: DataSnapshot) => void
+    onListened: (data: DataSnapshot) => void,
+    onNewChildAdded:(data:DataSnapshot) => void
   ) {
     const q = realtimeQuery(
       ref(
@@ -82,6 +85,14 @@ export class Repository {
       q,
       (snapshot) => {
         onListened(snapshot)
+      }
+    )
+
+    onChildAdded(
+      q,
+      (snapshot, _) => {
+        // console.log(snapshot.exportVal())
+        onNewChildAdded(snapshot)
       }
     )
   }
@@ -163,6 +174,44 @@ export class Repository {
       ref(this.realtimeDb, `/em_call/${emCallId}`),
       {
         "em_call_status_id": newStatus
+      }
+    ).then(() => {
+      onSuccess()
+    }).catch(e => {
+      console.log(e)
+    })
+  }
+
+  changeCallEmTransportId(
+    emCallId: string,
+    emTransportId: string,
+    onSuccess: () => void
+  ) {
+    update(
+      ref(this.realtimeDb, `/em_call/${emCallId}`),
+      {
+        "em_transport_id": emTransportId
+      }
+    ).then(() => {
+      onSuccess()
+    }).catch(e => {
+      console.log(e)
+    })
+  }
+
+  changeEmTransportAvailability(
+    emTransportId:string,
+    status:boolean,
+    onSuccess:() => void
+  ){
+    updateDoc(
+      doc(
+        this.firestore,
+        "em_transport",
+        emTransportId
+      ),
+      {
+        "is_available":status
       }
     ).then(() => {
       onSuccess()
