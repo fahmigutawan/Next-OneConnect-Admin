@@ -7,6 +7,7 @@ import { useParams } from "next/navigation"
 import { Loading, Notify } from "notiflix"
 import React from "react"
 import { Component, ReactNode, useEffect, useState } from "react"
+import { CallStatusAction } from "@/app/CallStatusAction"
 
 export default function DashboardScreen() {
     const params = useParams()
@@ -50,7 +51,7 @@ export default function DashboardScreen() {
                     //         return b.created_at - a.created_at
                     //     })[0]
                     // )
-                    
+
                     // Object.values<EmCallStruct>(newChild.exportVal()).forEach(s => {
                     //     console.log(s.uid)
                     // })
@@ -130,41 +131,41 @@ export default function DashboardScreen() {
                                             <div className="flex flex-col items-center space-y-[16px]">
                                                 <p>{emCallStatus.get(item.em_call_status_id) ?? "..."}</p>
                                                 <CallStatusAction
-                                                    call_status_id={item.em_call_status_id}
-                                                    em_transport_id={item.em_transport_id}
-                                                    onProsesPanggilanClick={() => {
-                                                        Loading.circle()
-                                                        repository.changeCallStatus(
-                                                            item.em_call_id,
-                                                            CallStatus.DIPROSES,
-                                                            () => {
-                                                                Loading.remove()
-                                                                repository.sendNotificationToUser(
-                                                                    item.uid,
-                                                                    "Panggilan Ditindak lanjuti",
-                                                                    "Panggilan sedang diproses, tunggu tindakan selanjutnya!",
-                                                                    () => {
-                                                                        //TODO
+                                                        call_status_id={item.em_call_status_id}
+                                                        em_transport_id={item.em_transport_id}
+                                                        onProsesPanggilanClick={() => {
+                                                            Loading.circle()
+                                                            repository.changeCallStatus(
+                                                                item.em_call_id,
+                                                                CallStatus.DIPROSES,
+                                                                () => {
+                                                                    Loading.remove()
+                                                                    repository.sendNotificationToUser(
+                                                                        item.uid,
+                                                                        "Panggilan Ditindak lanjuti",
+                                                                        "Panggilan sedang diproses, tunggu tindakan selanjutnya!",
+                                                                        () => {
+                                                                            //TODO
+                                                                        }
+                                                                    )
+                                                                    Notify.success(`Status Panggilan ${item.em_call_id} Berhasil Dirubah`)
+                                                                    datas[index] = {
+                                                                        em_call_id: item.em_call_id,
+                                                                        em_pvd_id: item.em_pvd_id,
+                                                                        em_call_status_id: CallStatus.DIPROSES,
+                                                                        created_at: item.created_at,
+                                                                        em_transport_id: item.em_transport_id,
+                                                                        uid: item.uid,
+                                                                        user_phone_number: item.user_phone_number
                                                                     }
-                                                                )
-                                                                Notify.success(`Status Panggilan ${item.em_call_id} Berhasil Dirubah`)
-                                                                datas[index] = {
-                                                                    em_call_id: item.em_call_id,
-                                                                    em_pvd_id: item.em_pvd_id,
-                                                                    em_call_status_id: CallStatus.DIPROSES,
-                                                                    created_at: item.created_at,
-                                                                    em_transport_id: item.em_transport_id,
-                                                                    uid: item.uid,
-                                                                    user_phone_number: item.user_phone_number
                                                                 }
-                                                            }
-                                                        )
-                                                    }}
-                                                    onKirimPetugasClick={() => {
-                                                        setShowKirimPetugasModal(true)
-                                                        setPickedEmCall(item)
-                                                    }}
-                                                />
+                                                            )
+                                                        }}
+                                                        onKirimPetugasClick={() => {
+                                                            setShowKirimPetugasModal(true)
+                                                            setPickedEmCall(item)
+                                                        }}
+                                                    />
                                             </div>
                                         </td>
                                     </tr>
@@ -218,14 +219,17 @@ export default function DashboardScreen() {
                                                                                 s.em_transport_id,
                                                                                 false,
                                                                                 () => {
-                                                                                    emTransport[index] = {
-                                                                                        em_pvd_id: s.em_pvd_id,
-                                                                                        em_transport_id: s.em_transport_id,
-                                                                                        is_available: false,
-                                                                                        regist_number: s.regist_number
-                                                                                    }
+                                                                                    repository.sendNotificationToDriver(
+                                                                                        s.em_transport_id,
+                                                                                        pickedEmCall?.em_call_id ?? "",
+                                                                                        "Panggilan Darurat",
+                                                                                        "Panggilan Darurat pada lokasi yang sudah ditentukan",
+                                                                                        () => {
+                                                                                            setShowKirimPetugasModal(false)
 
-                                                                                    Notify.success("Sudah ditugaskan kepada kendaraan " + s.regist_number)
+                                                                                            Notify.success("Sudah ditugaskan kepada kendaraan " + s.regist_number)
+                                                                                        }
+                                                                                    )
                                                                                 }
                                                                             )
                                                                         }
@@ -248,55 +252,4 @@ export default function DashboardScreen() {
             </Modal>
         </div>
     )
-}
-
-export class CallStatusAction extends React.Component<{
-    call_status_id: string,
-    em_transport_id: string,
-    onProsesPanggilanClick: () => void,
-    onKirimPetugasClick: () => void
-}>
-{
-
-    render(): ReactNode {
-        switch (this.props.call_status_id) {
-            case CallStatus.MENUNGGU_KONFIRMASI:
-                return <Button variant="contained" className="w-full bg-blue-500" onClick={this.props.onProsesPanggilanClick}>Proses Panggilan</Button>
-            case CallStatus.DIPROSES:
-                return <Button disabled={this.props.em_transport_id != "."} variant="contained" className="w-full bg-yellow-600" onClick={this.props.onKirimPetugasClick}>Kirim Petugas</Button>
-            case CallStatus.SEDANG_PERJALANAN:
-                return <></>
-            case CallStatus.SELESAI:
-                return <></>
-            case CallStatus.DIBATALKAN:
-                return <></>
-        }
-
-        return <></>
-    }
-
-}
-
-export class Notification extends React.Component<{
-    call: EmCallStruct | null
-}>{
-    render(): React.ReactNode {
-        if (this.props.call == null) {
-            return (
-                <div>
-                    Belum Ada Notifikasi Baru
-                </div>
-            )
-        } else {
-            return (
-                <div className="flex flex-col space-y-[8px]">
-                    <p className="text-[24px]">NOTIFIKASI BARU</p>
-                    <div>
-                        <p>Id Panggilan : {this.props.call.em_call_id}</p>
-                        <p>Nomor HP : {this.props.call.user_phone_number}</p>
-                    </div>
-                </div>
-            )
-        }
-    }
 }

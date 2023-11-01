@@ -5,10 +5,10 @@ import { DataSnapshot, getDatabase, onValue, ref, query as realtimeQuery, orderB
 export interface EmCallStruct {
   em_call_id: string,
   em_call_status_id: string,
-  em_transport_id:string,
+  em_transport_id: string,
   em_pvd_id: string,
   created_at: number,
-  user_phone_number:string,
+  user_phone_number: string,
   uid: string
 }
 
@@ -70,7 +70,7 @@ export class Repository {
   listenEmergencyCall(
     emPvdId: string,
     onListened: (data: DataSnapshot) => void,
-    onNewChildAdded:(data:DataSnapshot) => void
+    onNewChildAdded: (data: DataSnapshot) => void
   ) {
     const q = realtimeQuery(
       ref(
@@ -200,10 +200,10 @@ export class Repository {
   }
 
   changeEmTransportAvailability(
-    emTransportId:string,
-    status:boolean,
-    onSuccess:() => void
-  ){
+    emTransportId: string,
+    status: boolean,
+    onSuccess: () => void
+  ) {
     updateDoc(
       doc(
         this.firestore,
@@ -211,7 +211,7 @@ export class Repository {
         emTransportId
       ),
       {
-        "is_available":status
+        "is_available": status
       }
     ).then(() => {
       onSuccess()
@@ -245,8 +245,51 @@ export class Repository {
     })
   }
 
-  sendNotificationToDriver() {
-    //TODO
+  sendNotificationToDriver(
+    id: string,
+    emCallId:string,
+    title: string,
+    body: string,
+    onSuccess: () => void
+  ) {
+    getDoc(
+      doc(
+        this.firestore,
+        "fcm_token",
+        id
+      )
+    ).then(fcm => {
+      fetch("https://fcm.googleapis.com/fcm/send", {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "key=" + process.env.FB_FCM_SERVERKEY
+        },
+        body: JSON.stringify(
+          {
+            "to": fcm.get("token"),
+            "notification": {
+              "title": title,
+              "body": body,
+              "mutable_content": true,
+              "sound": "Tri-tone"
+            },
+
+            "data": {
+              "em_call_id":emCallId
+            }
+          }
+        ),
+        method: "POST"
+      }).then(s => {
+        if (s.status == 200) {
+          onSuccess()
+        }
+      }).catch(e => {
+        console.log(e)
+      })
+    }).catch(e => {
+      console.log(e)
+    })
   }
 
   sendNotificationToUser(
@@ -265,7 +308,7 @@ export class Repository {
       fetch("https://fcm.googleapis.com/fcm/send", {
         headers: {
           "Content-Type": "application/json",
-          "Authorization": "key="+process.env.FB_FCM_SERVERKEY
+          "Authorization": "key=" + process.env.FB_FCM_SERVERKEY
         },
         body: JSON.stringify(
           {
