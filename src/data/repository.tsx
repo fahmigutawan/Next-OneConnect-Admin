@@ -9,6 +9,8 @@ export interface EmCallStruct {
   em_pvd_id: string,
   created_at: number,
   user_phone_number: string,
+  user_lat:string,
+  user_long:string,
   uid: string
 }
 
@@ -34,6 +36,13 @@ export interface EmTransportStruct {
   is_available: boolean,
   regist_number: string,
   name: string
+}
+
+export interface UserStruct {
+  uid: string,
+  name: string,
+  phone_number: string,
+  nik: string
 }
 
 export class Repository {
@@ -248,9 +257,9 @@ export class Repository {
   }
 
   getSingleEmTransport(
-    emTransportId:string,
-    onSuccess:(data:EmTransportStruct) => void
-  ){
+    emTransportId: string,
+    onSuccess: (data: EmTransportStruct) => void
+  ) {
     getDoc(
       doc(
         this.firestore,
@@ -267,6 +276,28 @@ export class Repository {
           name: item.get("name")
         }
       )
+    }).catch(e => {
+      console.log(e)
+    })
+  }
+
+  getSingleUser(
+    uid: string,
+    onSuccess: (data: UserStruct) => void
+  ) {
+    getDoc(
+      doc(
+        this.firestore,
+        "user",
+        uid
+      )
+    ).then(s => {
+      onSuccess({
+        uid: s.get("uid"),
+        name: s.get("name"),
+        nik: s.get("nik"),
+        phone_number: s.get("phone_number")
+      })
     }).catch(e => {
       console.log(e)
     })

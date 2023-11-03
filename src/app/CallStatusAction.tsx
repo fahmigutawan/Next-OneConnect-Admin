@@ -6,7 +6,8 @@ type CallStatusActionProps = {
     em_transport_id: string,
     onProsesPanggilanClick: () => void,
     onKirimPetugasClick: () => void,
-    onLihatPetugasClick: () => void
+    onLihatPetugasClick: () => void,
+    onLihatPemohonClick: () => void
 }
 
 
@@ -15,17 +16,21 @@ export const CallStatusAction: React.FC<CallStatusActionProps> = ({
     em_transport_id = "",
     onProsesPanggilanClick = () => { },
     onKirimPetugasClick = () => { },
-    onLihatPetugasClick = () => { }
+    onLihatPetugasClick = () => { },
+    onLihatPemohonClick = () => { }
 }) => {
 
     switch (call_status_id) {
         case CallStatus.MENUNGGU_KONFIRMASI:
-            return <Button variant="contained" className="w-full bg-blue-500" onClick={onProsesPanggilanClick}>Proses Panggilan</Button>
+            return <div className="flex space-x-[8px]">
+                <Button variant="contained" className="w-[256px] bg-lime-600" onClick={onLihatPemohonClick}>Lihat Pemohon</Button>
+                <Button variant="contained" className="w-[256px] bg-blue-600" onClick={onProsesPanggilanClick}>Proses Panggilan</Button>
+            </div>
         case CallStatus.DIPROSES: {
             if (em_transport_id == ".") {
-                return <Button variant="contained" className="w-full bg-yellow-600" onClick={onKirimPetugasClick}>Kirim Petugas</Button>
+                return <Button variant="contained" className="w-[512px] bg-yellow-600" onClick={onKirimPetugasClick}>Kirim Petugas</Button>
             } else {
-                return <Button variant="contained" className="w-full bg-lime-600" onClick={onLihatPetugasClick}>Lihat Petugas</Button>
+                return <Button variant="contained" className="w-[512px] bg-lime-600" onClick={onLihatPetugasClick}>Lihat Petugas</Button>
             }
         }
 

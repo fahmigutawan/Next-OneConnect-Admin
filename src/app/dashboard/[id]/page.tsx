@@ -1,7 +1,7 @@
 "use client"
 
 import { CallStatus } from "@/constant/call_status"
-import { EmCallStatus, EmCallStruct, EmProviderStruct, EmTransportStruct, EmTypeStruct, Repository } from "@/data/repository"
+import { EmCallStatus, EmCallStruct, EmProviderStruct, EmTransportStruct, EmTypeStruct, Repository, UserStruct } from "@/data/repository"
 import { Box, Button, Icon, Modal } from "@mui/material"
 import { useParams } from "next/navigation"
 import { Loading, Notify } from "notiflix"
@@ -25,10 +25,12 @@ export default function DashboardScreen() {
     })
     const [emCallStatus, _] = useState(new Map<string, string>())
     const [pickedEmCall, setPickedEmCall] = useState<EmCallStruct | null>(null)
+    const [showLihatPemohonModal, setShowLihatPemohonModal] = useState(false)
     const [showKirimPetugasModal, setShowKirimPetugasModal] = useState(false)
     const [showLihatPetugasModal, setShowLihatPetugasModal] = useState(false)
     const [emTransport, setEmTransport] = useState<EmTransportStruct[]>([])
     const [singleTransport, setSingleTransport] = useState<EmTransportStruct | null>(null)
+    const [singleUserStruct, setSingleUserStruct] = useState<UserStruct | null>(null)
     const [newCall, setNewCall] = useState<EmCallStruct | null>(null)
 
     useEffect(() => {
@@ -111,6 +113,17 @@ export default function DashboardScreen() {
         }
     }, [showLihatPetugasModal])
 
+    useEffect(() => {
+        if (pickedEmCall != null) {
+            repository.getSingleUser(
+                pickedEmCall.uid,
+                s => {
+                    setSingleUserStruct(s)
+                }
+            )
+        }
+    }, [showLihatPemohonModal])
+
     return (
         <div>
             <div className="h-screen bg-slate-200">
@@ -180,6 +193,10 @@ export default function DashboardScreen() {
                                                     }}
                                                     onLihatPetugasClick={() => {
                                                         setShowLihatPetugasModal(true)
+                                                        setPickedEmCall(item)
+                                                    }}
+                                                    onLihatPemohonClick={() => {
+                                                        setShowLihatPemohonModal(true)
                                                         setPickedEmCall(item)
                                                     }}
                                                 />
@@ -284,6 +301,31 @@ export default function DashboardScreen() {
                             <p>Nama: {singleTransport?.name}</p>
                             <p>Nomor Plat: {singleTransport?.regist_number}</p>
                             <p>ID: {singleTransport?.em_pvd_id}</p>
+                        </div>
+                    </div>
+                </Box>
+            </Modal>
+            <Modal
+                open={showLihatPemohonModal && singleUserStruct != null}
+                onClose={() => {
+                    setShowLihatPemohonModal(false)
+                    setPickedEmCall(null)
+                    setSingleUserStruct(null)
+                }}
+                className="flex justify-center items-center"
+            >
+                <Box>
+                    <div className="p-[32px] space-y-[16px] overflow-auto flex flex-col items-center justify-center bg-white rounded-sm">
+                        <p className="text-[20px] font-bold">Detail Pemohon</p>
+                        <div>
+                            <p>NIK: {singleUserStruct?.nik}</p>
+                            <p>Nama: {singleUserStruct?.name}</p>
+                            <p>Nomor HP: {singleUserStruct?.phone_number}</p>
+                            <Button
+                                variant="contained"
+                                className="bg-lime-600 w-full"
+                                href={`https://maps.google.com/?q=${pickedEmCall?.user_lat},${pickedEmCall?.user_long}`}
+                            >Cek Lokasi</Button>
                         </div>
                     </div>
                 </Box>
