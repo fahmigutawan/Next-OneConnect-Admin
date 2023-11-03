@@ -32,7 +32,8 @@ export interface EmTransportStruct {
   em_transport_id: string,
   em_pvd_id: string,
   is_available: boolean,
-  regist_number: string
+  regist_number: string,
+  name: string
 }
 
 export class Repository {
@@ -236,7 +237,8 @@ export class Repository {
             em_pvd_id: item.get("em_pvd_id"),
             em_transport_id: item.get("em_transport_id"),
             is_available: item.get("is_available"),
-            regist_number: item.get("regist_number")
+            regist_number: item.get("regist_number"),
+            name: item.get("name")
           }
         })
       )
@@ -245,9 +247,34 @@ export class Repository {
     })
   }
 
+  getSingleEmTransport(
+    emTransportId:string,
+    onSuccess:(data:EmTransportStruct) => void
+  ){
+    getDoc(
+      doc(
+        this.firestore,
+        "em_transport",
+        emTransportId
+      )
+    ).then(item => {
+      onSuccess(
+        {
+          em_pvd_id: item.get("em_pvd_id"),
+          em_transport_id: item.get("em_transport_id"),
+          is_available: item.get("is_available"),
+          regist_number: item.get("regist_number"),
+          name: item.get("name")
+        }
+      )
+    }).catch(e => {
+      console.log(e)
+    })
+  }
+
   sendNotificationToDriver(
     id: string,
-    emCallId:string,
+    emCallId: string,
     title: string,
     body: string,
     onSuccess: () => void
@@ -275,7 +302,7 @@ export class Repository {
             },
 
             "data": {
-              "em_call_id":emCallId
+              "em_call_id": emCallId
             }
           }
         ),
