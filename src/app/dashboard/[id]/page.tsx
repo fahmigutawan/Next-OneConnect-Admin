@@ -312,12 +312,12 @@ export default function DashboardScreen() {
                             <p>NIK: {singleUserStruct?.nik}</p>
                             <p>Nama: {singleUserStruct?.name}</p>
                             <p>Nomor HP: {singleUserStruct?.phone_number}</p>
-                            <Button
-                                variant="contained"
-                                className="bg-lime-600 w-full"
-                                href={`https://maps.google.com/?q=${pickedEmCall?.user_lat},${pickedEmCall?.user_long}`}
-                                target="_blank"
-                            >Cek Lokasi</Button>
+                            <a href={`https://maps.google.com/?q=${pickedEmCall?.user_lat},${pickedEmCall?.user_long}`} target="_blank">
+                                <Button
+                                    variant="contained"
+                                    className="bg-lime-600 w-full"
+                                >Cek Lokasi</Button>
+                            </a>
                         </div>
                     </div>
                 </Box>
