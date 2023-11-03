@@ -316,6 +316,7 @@ export default function DashboardScreen() {
                                 variant="contained"
                                 className="bg-lime-600 w-full"
                                 href={`https://maps.google.com/?q=${pickedEmCall?.user_lat},${pickedEmCall?.user_long}`}
+                                target="_blank"
                             >Cek Lokasi</Button>
                         </div>
                     </div>
