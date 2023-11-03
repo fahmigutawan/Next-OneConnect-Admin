@@ -175,15 +175,6 @@ export default function DashboardScreen() {
                                                                     }
                                                                 )
                                                                 Notify.success(`Status Panggilan ${item.em_call_id} Berhasil Dirubah`)
-                                                                datas[index] = {
-                                                                    em_call_id: item.em_call_id,
-                                                                    em_pvd_id: item.em_pvd_id,
-                                                                    em_call_status_id: CallStatus.DIPROSES,
-                                                                    created_at: item.created_at,
-                                                                    em_transport_id: item.em_transport_id,
-                                                                    uid: item.uid,
-                                                                    user_phone_number: item.user_phone_number
-                                                                }
                                                             }
                                                         )
                                                     }}
